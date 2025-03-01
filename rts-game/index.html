@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command & Strategy - 3D RTS Game</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="selection-box"></div>
+    <div id="ui-container">
+        <div id="resources">
+            <div class="resource">
+                <div class="resource-icon" style="background-color: yellow;"></div>
+                <span id="credits">2000</span>
+            </div>
+            <div class="resource">
+                <div class="resource-icon" style="background-color: green;"></div>
+                <span id="power">100</span>
+            </div>
+        </div>
+        <div id="selected-info">No units selected</div>
+        <div id="commands"></div>
+        <div id="minimap"></div>
+    </div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- Utils -->
+    <script type="module" src="js/utils/math.js"></script>
+    <script type="module" src="js/utils/helpers.js"></script>
+    
+    <!-- Core -->
+    <script type="module" src="js/core/resources.js"></script>
+    <script type="module" src="js/core/init.js"></script>
+    <script type="module" src="js/core/engine.js"></script>
+    
+    <!-- Terrain -->
+    <script type="module" src="js/terrain/simplex.js"></script>
+    <script type="module" src="js/terrain/generator.js"></script>
+    <script type="module" src="js/terrain/fogOfWar.js"></script>
+    
+    <!-- Pathfinding -->
+    <script type="module" src="js/pathfinding/grid.js"></script>
+    <script type="module" src="js/pathfinding/astar.js"></script>
+    
+    <!-- Units -->
+    <script type="module" src="js/units/unit.js"></script>
+    <script type="module" src="js/units/harvester.js"></script>
+    <script type="module" src="js/units/tank.js"></script>
+    
+    <!-- Buildings -->
+    <script type="module" src="js/buildings/building.js"></script>
+    <script type="module" src="js/buildings/commandCenter.js"></script>
+    <script type="module" src="js/buildings/warFactory.js"></script>
+    <script type="module" src="js/buildings/powerPlant.js"></script>
+    
+    <!-- Combat -->
+    <script type="module" src="js/combat/combat.js"></script>
+    <script type="module" src="js/combat/projectile.js"></script>
+    <script type="module" src="js/combat/effects.js"></script>
+    
+    <!-- UI -->
+    <script type="module" src="js/ui/interface.js"></script>
+    <script type="module" src="js/ui/minimap.js"></script>
+    <script type="module" src="js/ui/selection.js"></script>
+    
+    <!-- Input -->
+    <script type="module" src="js/input/mouse.js"></script>
+    <script type="module" src="js/input/keyboard.js"></script>
+    
+    <!-- AI -->
+    <script type="module" src="js/ai/behavior.js"></script>
+    <script type="module" src="js/ai/ai.js"></script>
+    
+    <!-- Main entry point -->
+    <script type="module">
+        import { init } from './js/core/init.js';
+        
+        // Initialize game when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

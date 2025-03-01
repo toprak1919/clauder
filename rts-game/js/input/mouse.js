@@ -1,15 +1,18 @@
 import * as THREE from 'three';
-import { scene, camera, selectedUnits, hoveredObject, buildMode } from '../core/init.js';
+import { scene, camera, selectedUnits, buildMode } from '../core/init.js';
 import { onWindowResize } from '../core/init.js';
 import { addToSelection, selectUnitsInBox, moveSelectedUnits } from '../ui/selection.js';
 import { showBuildingOptions } from '../ui/interface.js';
 import { updateBuildingPreview, exitBuildMode, placeBuildingHandler } from '../buildings/building.js';
 import { enterBuildMode } from '../buildings/building.js';
+import { onKeyDown } from './keyboard.js';
 
 // Mouse state
 let mouseDown = false;
 let selectionStart = { x: 0, y: 0 };
 let currentMousePosition = { x: 0, y: 0 };
+// Track the currently highlighted object locally in this file
+let currentHighlightedObject = null;
 
 // Setup event listeners for user input
 export function setupEventListeners() {
@@ -23,6 +26,8 @@ export function setupEventListeners() {
 
 // Handle mouse down event
 export function onMouseDown(event) {
+    console.log("Mouse down event fired");
+    
     if (event.button === 0) { // Left mouse button
         mouseDown = true;
         selectionStart.x = event.clientX;
@@ -30,6 +35,7 @@ export function onMouseDown(event) {
         
         // Clear selection on new click (unless shift is held)
         if (!event.shiftKey) {
+            console.log("Clearing selection (shift not held)");
             selectedUnits.forEach(unit => {
                 // Visual deselection
                 unit.material.emissive.set(0x000000);
@@ -45,47 +51,59 @@ export function onMouseDown(event) {
         selectionBox.style.height = '0px';
         selectionBox.style.display = 'block';
         
-        // Check for direct unit/building selection
-        const intersects = getIntersects(event);
-        
-        if (intersects.length > 0) {
-            const selected = intersects[0].object;
+        try {
+            // Check for direct unit/building selection
+            const intersects = getIntersects(event);
             
-            // Handle building in build mode
-            if (buildMode.active && selected.name === 'terrain') {
-                placeBuildingHandler(event);
-                return;
-            }
-            
-            // Select player units and buildings
-            if (selected.userData.faction === 'player') {
-                if (selected.userData.type === 'unit') {
-                    addToSelection(selected);
-                } else if (selected.userData.type === 'building') {
-                    // Show building production options
-                    showBuildingOptions(selected);
+            if (intersects.length > 0) {
+                const selected = intersects[0].object;
+                console.log("Selected object:", selected);
+                
+                // Handle building in build mode
+                if (buildMode.active && selected.name === 'terrain') {
+                    console.log("Placing building on terrain");
+                    placeBuildingHandler(event);
+                    return;
+                }
+                
+                // Select player units and buildings
+                if (selected.userData.faction === 'player') {
+                    if (selected.userData.type === 'unit') {
+                        console.log("Adding unit to selection");
+                        addToSelection(selected);
+                    } else if (selected.userData.type === 'building') {
+                        console.log("Showing building options");
+                        // Show building production options
+                        showBuildingOptions(selected);
+                    }
                 }
             }
+        } catch (error) {
+            console.error("Error in onMouseDown:", error);
         }
     } else if (event.button === 2) { // Right mouse button
         // Handle right-click actions
         if (selectedUnits.length > 0) {
-            const intersects = getIntersects(event);
-            
-            if (intersects.length > 0) {
-                const target = intersects[0].object;
+            try {
+                const intersects = getIntersects(event);
                 
-                if (target.userData.faction === 'enemy') {
-                    // Attack enemy
-                    selectedUnits.forEach(unit => {
-                        unit.userData.targetEntity = target;
-                        unit.userData.state = 'attacking';
-                    });
-                } else {
-                    // Move to position
-                    const targetPosition = intersects[0].point;
-                    moveSelectedUnits(targetPosition);
+                if (intersects.length > 0) {
+                    const target = intersects[0].object;
+                    
+                    if (target.userData.faction === 'enemy') {
+                        // Attack enemy
+                        selectedUnits.forEach(unit => {
+                            unit.userData.targetEntity = target;
+                            unit.userData.state = 'attacking';
+                        });
+                    } else {
+                        // Move to position
+                        const targetPosition = intersects[0].point;
+                        moveSelectedUnits(targetPosition);
+                    }
                 }
+            } catch (error) {
+                console.error("Error in right-click handling:", error);
             }
         }
         
@@ -136,51 +154,66 @@ export function onMouseMove(event) {
     }
     
     // Update hovering
-    updateHoveredObject(event);
+    try {
+        updateObjectHighlighting(event);
+    } catch (error) {
+        console.error("Error in hover effect:", error);
+    }
 }
 
 // Get intersected objects from mouse event
 export function getIntersects(event) {
-    // Create raycaster
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    
-    // Convert mouse position to normalized device coordinates
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    
-    raycaster.setFromCamera(mouse, camera);
-    
-    // Get intersected objects
-    return raycaster.intersectObjects(scene.children, true);
+    try {
+        // Create raycaster
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        // Convert mouse position to normalized device coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        
+        raycaster.setFromCamera(mouse, camera);
+        
+        // Get intersected objects - use a copy to avoid modification of original array
+        return [...raycaster.intersectObjects(scene.children, true)];
+    } catch (error) {
+        console.error("Error in getIntersects:", error);
+        return [];
+    }
 }
 
-// Update hovered object highlighting
-export function updateHoveredObject(event) {
-    // Remove previous hover effect
-    if (hoveredObject && hoveredObject.material) {
-        hoveredObject.material.opacity = 1;
+// Update object highlighting directly without shared state
+function updateObjectHighlighting(event) {
+    // First, remove highlight from the current object if it exists
+    if (currentHighlightedObject && currentHighlightedObject.material) {
+        currentHighlightedObject.material.opacity = 1;
+        currentHighlightedObject = null;
     }
     
-    // Get object under cursor
-    const intersects = getIntersects(event);
-    
-    if (intersects.length > 0) {
-        const object = intersects[0].object;
+    try {
+        // Get object under cursor
+        const intersects = getIntersects(event);
         
-        // Only highlight selectable objects
-        if (object.userData.type === 'unit' || object.userData.type === 'building') {
-            hoveredObject = object;
+        if (intersects.length > 0) {
+            const object = intersects[0].object;
             
-            // Apply hover effect (slight transparency)
-            if (hoveredObject.material) {
-                hoveredObject.material.transparent = true;
-                hoveredObject.material.opacity = 0.8;
+            // Only highlight selectable objects
+            if (object && (object.userData.type === 'unit' || object.userData.type === 'building')) {
+                currentHighlightedObject = object;
+                
+                // Apply hover effect directly to the object
+                if (currentHighlightedObject.material) {
+                    currentHighlightedObject.material.transparent = true;
+                    currentHighlightedObject.material.opacity = 0.8;
+                }
             }
-        } else {
-            hoveredObject = null;
         }
-    } else {
-        hoveredObject = null;
+    } catch (error) {
+        console.error("Error updating object highlighting:", error);
     }
+}
+
+// Rename updateHoveredObject to avoid any confusion or calls to old function
+export function updateHoveredObject(event) {
+    updateObjectHighlighting(event);
 }

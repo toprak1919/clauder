@@ -8,6 +8,12 @@ import { findNearestResource } from '../utils/helpers.js';
 
 // AI action: Build units and structures
 export function aiActionBuild() {
+    // Safety check for resources
+    if (!resources || !resources.enemy) {
+        console.warn("Resources not properly initialized for AI building");
+        return;
+    }
+
     // Check if we need more harvesters
     if (aiState.harvesters.length < 3 && resources.enemy.credits >= 800) {
         // Find a war factory to build harvester
@@ -71,6 +77,12 @@ export function aiActionBuild() {
 
 // AI action: Expand base
 export function aiActionExpand() {
+    // Safety check for resources
+    if (!resources || !resources.enemy) {
+        console.warn("Resources not properly initialized for AI expansion");
+        return;
+    }
+
     // Build new structures to expand base
     if (resources.enemy.credits >= 800) {
         const commandCenter = buildings.enemy.find(b => b.userData.buildingType === 'commandCenter');
@@ -110,6 +122,12 @@ export function aiActionExpand() {
 
 // AI action: Attack player
 export function aiActionAttack() {
+    // Safety check for resources
+    if (!resources || !resources.enemy) {
+        console.warn("Resources not properly initialized for AI attack");
+        return;
+    }
+
     // Gather attack force
     if (aiState.defenseForce.length >= 4) {
         // Move 4 units from defense to attack
@@ -167,6 +185,12 @@ export function aiActionAttack() {
 
 // AI action: Manage resource gathering
 export function aiActionManageResources() {
+    // Safety check for resources
+    if (!resources || !resources.enemy) {
+        console.warn("Resources not properly initialized for AI resource management");
+        return;
+    }
+    
     aiState.harvesters.forEach(harvester => {
         if (harvester.userData.state === 'idle') {
             // If idle, find nearest resource

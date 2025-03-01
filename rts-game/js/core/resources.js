@@ -6,8 +6,28 @@ export let resources = {
     enemy: { credits: 2000, power: 100 } 
 };
 
+// Extended debug logging for resources initialization
+console.log("Resources module loaded and initialized:", JSON.stringify(resources));
+
+// Add a function to verify resources are valid
+export function verifyResources() {
+    if (!resources || !resources.player || !resources.enemy) {
+        console.error("Resources are invalid:", resources);
+        // Re-initialize resources if they're invalid
+        resources = { 
+            player: { credits: 2000, power: 100 }, 
+            enemy: { credits: 2000, power: 100 } 
+        };
+        console.log("Resources re-initialized:", resources);
+    }
+    return resources;
+}
+
 // Update resources
 export function updateResources() {
+    // Verify resources are valid before updating
+    verifyResources();
+    
     // Update resource display
     document.getElementById('credits').textContent = resources.player.credits;
     document.getElementById('power').textContent = resources.player.power;
@@ -31,6 +51,8 @@ export function updateResources() {
     if (frameCount % 60 === 0) { // Once per second
         resources.enemy.credits += 10;
     }
+    
+    frameCount++;
 }
 
 // Get building cost

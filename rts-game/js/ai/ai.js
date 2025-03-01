@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { units, buildings, GAME_SIZE } from '../core/init.js';
 import { gameActive } from '../core/engine.js';
+import { resources } from '../core/resources.js';
 import { aiActionBuild, aiActionExpand, aiActionAttack, aiActionManageResources, aiUpdateTargeting } from './behavior.js';
 
 // AI state
@@ -34,6 +35,12 @@ export function initializeAI() {
 export function updateAI() {
     // Skip if game is over
     if (!gameActive) return;
+    
+    // Safety check for resources
+    if (!resources || !resources.enemy) {
+        console.warn("Resources not properly initialized for AI update");
+        return;
+    }
     
     // Update AI state based on resources and time
     const now = Date.now();

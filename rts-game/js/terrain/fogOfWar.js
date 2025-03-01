@@ -1,10 +1,8 @@
 import * as THREE from 'three';
-import { scene, GAME_SIZE, MAP_SIZE, fogOfWarGrid, units, buildings } from '../core/init.js';
+import { scene, GAME_SIZE, MAP_SIZE, TILE_SIZE, units, buildings } from '../core/init.js';
 
 // Initialize fog of war
 export function initFogOfWar() {
-    fogOfWarGrid = Array(MAP_SIZE).fill().map(() => Array(MAP_SIZE).fill(0)); // 0: Unexplored, 1: Explored, 2: Visible
-    
     const fogGeometry = new THREE.PlaneGeometry(GAME_SIZE, GAME_SIZE, 1, 1);
     fogGeometry.rotateX(-Math.PI / 2);
     
@@ -52,13 +50,16 @@ export function initFogOfWar() {
 export function createFogTexture() {
     const size = 512; // Texture size
     const data = new Uint8Array(size * size);
+    const grid = window.fogOfWarGrid;
+    
+    if (!grid) return new THREE.DataTexture(data, size, size, THREE.RedFormat);
     
     for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
             const gridX = Math.floor((x / size) * MAP_SIZE);
             const gridY = Math.floor((y / size) * MAP_SIZE);
             
-            const value = fogOfWarGrid[gridY][gridX] * 127;
+            const value = grid[gridY][gridX] * 127;
             data[y * size + x] = value;
         }
     }
@@ -70,11 +71,14 @@ export function createFogTexture() {
 
 // Update fog of war based on unit visibility
 export function updateFogOfWar() {
+    const grid = window.fogOfWarGrid;
+    if (!grid) return;
+    
     // Reset visibility (keep explored areas)
     for (let y = 0; y < MAP_SIZE; y++) {
         for (let x = 0; x < MAP_SIZE; x++) {
-            if (fogOfWarGrid[y][x] === 2) {
-                fogOfWarGrid[y][x] = 1;
+            if (grid[y][x] === 2) {
+                grid[y][x] = 1;
             }
         }
     }
@@ -91,7 +95,7 @@ export function updateFogOfWar() {
             for (let x = Math.max(0, gridX - visionRange); x < Math.min(MAP_SIZE, gridX + visionRange); x++) {
                 const distance = Math.sqrt(Math.pow(x - gridX, 2) + Math.pow(y - gridY, 2));
                 if (distance <= visionRange) {
-                    fogOfWarGrid[y][x] = 2; // Visible
+                    grid[y][x] = 2; // Visible
                 }
             }
         }
@@ -110,7 +114,7 @@ export function updateFogOfWar() {
         const gridY = Math.floor((unit.position.z + GAME_SIZE / 2) / TILE_SIZE);
         
         if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
-            unit.visible = fogOfWarGrid[gridY][gridX] === 2;
+            unit.visible = grid[gridY][gridX] === 2;
         }
     });
     
@@ -119,7 +123,7 @@ export function updateFogOfWar() {
         const gridY = Math.floor((building.position.z + GAME_SIZE / 2) / TILE_SIZE);
         
         if (gridX >= 0 && gridX < MAP_SIZE && gridY >= 0 && gridY < MAP_SIZE) {
-            building.visible = fogOfWarGrid[gridY][gridX] === 2;
+            building.visible = grid[gridY][gridX] === 2;
         }
     });
 }

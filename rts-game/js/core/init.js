@@ -21,11 +21,10 @@ export let terrain = [];
 export let units = { player: [], enemy: [] };
 export let buildings = { player: [], enemy: [] };
 export let selectedUnits = [];
-export let hoveredObject = null;
 export let buildMode = { active: false, building: null };
 export let resourceNodes = [];
 let pathfindingGrid = [];
-export let fogOfWarGrid = [];
+let fogOfWarGrid = [];
 let minimapRenderer, minimapScene, minimapCamera;
 export let unitGroups = {};
 
@@ -77,6 +76,9 @@ export function init() {
     
     // Create resource nodes
     createResourceNodes();
+    
+    // Initialize fog of war grid before calling initFogOfWar
+    window.fogOfWarGrid = Array(MAP_SIZE).fill().map(() => Array(MAP_SIZE).fill(0)); // 0: Unexplored, 1: Explored, 2: Visible
     
     // Initialize fog of war
     initFogOfWar();
